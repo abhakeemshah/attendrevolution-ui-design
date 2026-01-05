@@ -1,122 +1,124 @@
+/**
+ * AttendRevolution Design System
+ * ================================
+ * Modern educational theme with lime-green accents
+ * All colors use HSL format for consistency
+ */
+
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* AttendRevolution Design System - Modern Blue Educational Theme */
-
 @layer base {
   :root {
-    /* Dark theme with blue accents for modern educational feel */
-    --background: 222 47% 6%;
+    /* === Core Colors === */
+    /* Dark background for modern feel */
+    --background: 160 20% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 222 47% 9%;
+    /* Card surfaces - slightly elevated from background */
+    --card: 160 20% 9%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 9%;
+    /* Popover/dropdown surfaces */
+    --popover: 160 20% 9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Blue primary - professional and calm */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary - Lime Green accent for energy and freshness */
+    --primary: 82 85% 55%;
+    --primary-foreground: 160 20% 6%;
 
-    --secondary: 222 47% 14%;
+    /* Secondary - Muted surfaces */
+    --secondary: 160 20% 14%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 222 47% 14%;
-    --muted-foreground: 222 20% 64%;
+    /* Muted - For subtle text and borders */
+    --muted: 160 20% 14%;
+    --muted-foreground: 160 10% 60%;
 
-    /* Cyan accent for highlights */
-    --accent: 190 95% 50%;
+    /* Accent - Teal for secondary highlights */
+    --accent: 160 60% 45%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
+    /* Destructive - For errors (not red, theme-aware) */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 217 91% 60%;
+    /* Border and input styling */
+    --border: 160 20% 18%;
+    --input: 160 20% 18%;
+    --ring: 82 85% 55%;
 
+    /* Border radius */
     --radius: 0.75rem;
 
-    /* Custom tokens for AttendRevolution */
+    /* === Custom AttendRevolution Tokens === */
+    /* Success state - green confirmation */
     --success: 142 76% 45%;
     --success-foreground: 0 0% 98%;
     
+    /* Warning state */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 10%;
 
-    /* Attendance specific */
-    --attendance-marked: 217 91% 60%;
-    --attendance-pending: 222 47% 20%;
+    /* Attendance specific colors */
+    --attendance-marked: 82 85% 55%;
+    --attendance-pending: 160 20% 20%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(190 95% 50%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(190 95% 50%) 0%, hsl(217 91% 70%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(222 47% 9%) 0%, hsl(222 47% 6%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(222 47% 11%) 0%, hsl(222 47% 8%) 100%);
+    /* === Gradients === */
+    --gradient-primary: linear-gradient(135deg, hsl(82 85% 55%) 0%, hsl(160 60% 45%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(160 20% 9%) 0%, hsl(160 20% 6%) 100%);
 
-    /* Shadows */
-    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.15);
+    /* === Shadows === */
+    --shadow-glow: 0 0 40px hsl(82 85% 55% / 0.15);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5);
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    --sidebar-background: 222 47% 6%;
+    /* === Sidebar (if needed) === */
+    --sidebar-background: 160 20% 6%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 222 47% 14%;
+    --sidebar-primary: 82 85% 55%;
+    --sidebar-primary-foreground: 160 20% 6%;
+    --sidebar-accent: 160 20% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-border: 160 20% 18%;
+    --sidebar-ring: 82 85% 55%;
   }
 
+  /* Dark mode uses same values (already dark theme) */
   .dark {
-    --background: 222 47% 6%;
+    --background: 160 20% 6%;
     --foreground: 0 0% 98%;
-
-    --card: 222 47% 9%;
+    --card: 160 20% 9%;
     --card-foreground: 0 0% 98%;
-
-    --popover: 222 47% 9%;
+    --popover: 160 20% 9%;
     --popover-foreground: 0 0% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 222 47% 14%;
+    --primary: 82 85% 55%;
+    --primary-foreground: 160 20% 6%;
+    --secondary: 160 20% 14%;
     --secondary-foreground: 0 0% 98%;
-
-    --muted: 222 47% 14%;
-    --muted-foreground: 222 20% 64%;
-
-    --accent: 190 95% 50%;
+    --muted: 160 20% 14%;
+    --muted-foreground: 160 10% 60%;
+    --accent: 160 60% 45%;
     --accent-foreground: 0 0% 98%;
-
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 217 91% 60%;
-
-    --sidebar-background: 222 47% 6%;
+    --border: 160 20% 18%;
+    --input: 160 20% 18%;
+    --ring: 82 85% 55%;
+    --sidebar-background: 160 20% 6%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 222 47% 14%;
+    --sidebar-primary: 82 85% 55%;
+    --sidebar-primary-foreground: 160 20% 6%;
+    --sidebar-accent: 160 20% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-border: 160 20% 18%;
+    --sidebar-ring: 82 85% 55%;
   }
 }
 
+/* === Base Styles === */
 @layer base {
   * {
     @apply border-border;
@@ -126,20 +128,25 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* Typography - Using Space Grotesk for headings */
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight;
   }
 }
 
+/* === Utility Classes === */
 @layer utilities {
+  /* Glass morphism card effect */
   .glass-card {
     @apply bg-card/80 backdrop-blur-xl border border-border/50;
   }
 
+  /* Primary glow shadow */
   .glow-primary {
     box-shadow: var(--shadow-glow);
   }
 
+  /* Gradient text for branding */
   .gradient-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -147,39 +154,14 @@
     background-clip: text;
   }
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out forwards;
-  }
-
+  /* Smooth fade-in animation */
   .animate-fade-in {
     animation: fade-in 0.4s ease-out forwards;
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* === Keyframe Animations === */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
