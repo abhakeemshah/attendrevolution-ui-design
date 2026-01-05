@@ -1,81 +1,206 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Users, ArrowRight } from "lucide-react";
+import { GraduationCap, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RoleCard } from "@/components/ui/RoleCard";
-import { Header } from "@/components/layout/Header";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+
+// Valid teacher IDs (in real app, this would be verified via API)
+const VALID_TEACHER_IDS = ["T001", "T002", "T003", "TEACH123", "ADMIN"];
 
 export default function RoleSelection() {
-  const [selectedRole, setSelectedRole] = useState<"teacher" | "student" | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [showTeacherDialog, setShowTeacherDialog] = useState(false);
+  const [showStudentDialog, setShowStudentDialog] = useState(false);
+  const [teacherId, setTeacherId] = useState("");
+  const [rollNo, setRollNo] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleContinue = () => {
-    if (selectedRole === "teacher") {
-      navigate("/teacher");
-    } else if (selectedRole === "student") {
-      navigate("/student");
+  const handleTeacherClick = () => {
+    setShowTeacherDialog(true);
+    setTeacherId("");
+  };
+
+  const handleStudentClick = () => {
+    setShowStudentDialog(true);
+    setRollNo("");
+  };
+
+  const verifyTeacherId = async () => {
+    if (!teacherId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your Teacher ID",
+        variant: "destructive",
+      });
+      return;
     }
+
+    setIsVerifying(true);
+    
+    // Simulate API verification
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    if (VALID_TEACHER_IDS.includes(teacherId.toUpperCase())) {
+      setShowTeacherDialog(false);
+      navigate("/teacher/create", { state: { teacherId: teacherId.toUpperCase() } });
+    } else {
+      toast({
+        title: "ID is wrong",
+        description: "The Teacher ID you entered is invalid. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    setIsVerifying(false);
+  };
+
+  const verifyRollNo = async () => {
+    const rollNumber = parseInt(rollNo);
+    
+    if (!rollNo.trim() || isNaN(rollNumber) || rollNumber <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid Roll Number (greater than 0)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    setShowStudentDialog(false);
+    navigate("/student/scan", { state: { rollNo: rollNumber } });
+    
+    setIsVerifying(false);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <main className="relative pt-32 pb-16 px-6">
-        <div className="container mx-auto max-w-4xl">
-          {/* Hero Section */}
-          <div className="text-center mb-16 animate-fade-in">
-            <h1 className="font-display text-5xl md:text-6xl font-bold text-foreground mb-6">
-              Welcome to{" "}
-              <span className="gradient-text">AttendRevolution</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Modern attendance tracking made simple. Select your role to get started.
-            </p>
-          </div>
+      {/* Header */}
+      <div className="text-center mb-12 z-10">
+        <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
+          <span className="gradient-text">AttendRevolution</span>
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Select your role to continue
+        </p>
+      </div>
 
-          {/* Role Selection Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-              <RoleCard
-                icon={<GraduationCap className="w-10 h-10" />}
-                title="Teacher"
-                description="Create sessions, generate QR codes, and track student attendance in real-time"
-                selected={selectedRole === "teacher"}
-                onClick={() => setSelectedRole("teacher")}
+      {/* Role Selection Cards */}
+      <div className="flex flex-col sm:flex-row gap-8 z-10">
+        {/* Teacher Card */}
+        <button
+          onClick={handleTeacherClick}
+          className="group w-48 h-48 bg-card border-2 border-border rounded-lg p-6 flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-card/80 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+        >
+          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+            <BookOpen className="w-10 h-10 text-primary" />
+          </div>
+          <span className="text-lg font-display font-semibold text-foreground">
+            Teacher
+          </span>
+        </button>
+
+        {/* Student Card */}
+        <button
+          onClick={handleStudentClick}
+          className="group w-48 h-48 bg-card border-2 border-border rounded-lg p-6 flex flex-col items-center justify-center gap-4 hover:border-accent hover:bg-card/80 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
+        >
+          <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center group-hover:bg-accent/30 transition-colors">
+            <GraduationCap className="w-10 h-10 text-accent" />
+          </div>
+          <span className="text-lg font-display font-semibold text-foreground">
+            Student
+          </span>
+        </button>
+      </div>
+
+      {/* Teacher ID Dialog */}
+      <Dialog open={showTeacherDialog} onOpenChange={setShowTeacherDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-display">Enter Teacher ID</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="teacherId">Teacher ID</Label>
+              <Input
+                id="teacherId"
+                placeholder="e.g., T001"
+                value={teacherId}
+                onChange={(e) => setTeacherId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && verifyTeacherId()}
+                className="bg-secondary border-border"
+                autoFocus
               />
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              <RoleCard
-                icon={<Users className="w-10 h-10" />}
-                title="Student"
-                description="Mark your attendance by scanning QR codes or entering session codes"
-                selected={selectedRole === "student"}
-                onClick={() => setSelectedRole("student")}
-              />
-            </div>
-          </div>
-
-          {/* Continue Button */}
-          <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <Button
-              size="xl"
-              disabled={!selectedRole}
-              onClick={handleContinue}
-              className="min-w-[200px] gap-2"
+            <Button 
+              onClick={verifyTeacherId} 
+              className="w-full"
+              disabled={isVerifying}
             >
-              Continue
-              <ArrowRight className="w-5 h-5" />
+              {isVerifying ? (
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              ) : (
+                "Verify & Continue"
+              )}
             </Button>
           </div>
-        </div>
-      </main>
+        </DialogContent>
+      </Dialog>
+
+      {/* Student Roll No Dialog */}
+      <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-display">Enter Roll Number</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="rollNo">Roll Number</Label>
+              <Input
+                id="rollNo"
+                type="number"
+                placeholder="e.g., 15"
+                value={rollNo}
+                onChange={(e) => setRollNo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && verifyRollNo()}
+                className="bg-secondary border-border"
+                min="1"
+                autoFocus
+              />
+            </div>
+            <Button 
+              onClick={verifyRollNo} 
+              className="w-full"
+              disabled={isVerifying}
+            >
+              {isVerifying ? (
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              ) : (
+                "Continue to Scan"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
