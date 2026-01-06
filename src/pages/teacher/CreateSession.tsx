@@ -14,14 +14,13 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  ArrowLeft, Calendar, Clock, Users, BookOpen, 
-  Check, Sun, Moon, FlaskConical, BookText, AlertCircle 
+  ArrowLeft, Calendar, Clock, Users, BookOpen, Check,
+  Sun, Moon, FlaskConical, BookText, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,18 +31,6 @@ import {
 
 // Year options: 23 to 26 only
 const YEAR_OPTIONS = ["23", "24", "25", "26"];
-
-// Time slots from 8:30 onwards in 1-hour increments
-const TIME_PRESETS = [
-  { label: "8:30 - 9:30", from: "08:30", to: "09:30" },
-  { label: "9:30 - 10:30", from: "09:30", to: "10:30" },
-  { label: "10:30 - 11:30", from: "10:30", to: "11:30" },
-  { label: "11:30 - 12:30", from: "11:30", to: "12:30" },
-  { label: "12:30 - 1:30", from: "12:30", to: "13:30" },
-  { label: "1:30 - 2:30", from: "13:30", to: "14:30" },
-  { label: "2:30 - 3:30", from: "14:30", to: "15:30" },
-  { label: "3:30 - 4:30", from: "15:30", to: "16:30" },
-];
 
 export default function CreateSession() {
   const navigate = useNavigate();
@@ -70,18 +57,8 @@ export default function CreateSession() {
   const [timer, setTimer] = useState("");
   const [timeFrom, setTimeFrom] = useState("");
   const [timeTo, setTimeTo] = useState("");
-  const [notes, setNotes] = useState(""); // Optional
-
   // Auto-generate today's date
   const today = new Date().toISOString().split('T')[0];
-
-  // Apply a time preset
-  const applyTimePreset = (from: string, to: string) => {
-    setTimeFrom(from);
-    setTimeTo(to);
-    // Clear time field errors when preset is selected
-    setFieldErrors(prev => ({ ...prev, timeFrom: false, timeTo: false }));
-  };
 
   /**
    * Validate form and mark fields with errors
@@ -141,7 +118,6 @@ export default function CreateSession() {
       timerMinutes: parseInt(timer),
       timeFrom,
       timeTo,
-      notes: notes || null,
     };
 
     console.log("Creating session:", sessionData);
@@ -286,18 +262,38 @@ export default function CreateSession() {
                   </div>
                 </div>
 
-                {/* === Date (Auto-filled) === */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={today}
-                    disabled
-                    className="bg-muted border-border text-muted-foreground"
-                  />
+                {/* === Date + Expected Batch Row (compact) === */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      Date
+                    </Label>
+                    <Input
+                      type="date"
+                      value={today}
+                      disabled
+                      className="bg-muted border-border text-muted-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expectedBatch" className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-primary" />
+                      Batch Size *
+                    </Label>
+                    <Input
+                      id="expectedBatch"
+                      type="number"
+                      placeholder="e.g., 45"
+                      min="1"
+                      value={expectedBatch}
+                      onChange={(e) => {
+                        setExpectedBatch(e.target.value);
+                        setFieldErrors(prev => ({ ...prev, expectedBatch: false }));
+                      }}
+                      className={getInputClass('expectedBatch')}
+                    />
+                  </div>
                 </div>
 
                 {/* === Session Type === */}
@@ -346,26 +342,6 @@ export default function CreateSession() {
                   />
                 </div>
 
-                {/* === Expected Batch Size === */}
-                <div className="space-y-2">
-                  <Label htmlFor="expectedBatch" className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    Expected Batch Size *
-                  </Label>
-                  <Input
-                    id="expectedBatch"
-                    type="number"
-                    placeholder="e.g., 45"
-                    min="1"
-                    value={expectedBatch}
-                    onChange={(e) => {
-                      setExpectedBatch(e.target.value);
-                      setFieldErrors(prev => ({ ...prev, expectedBatch: false }));
-                    }}
-                    className={getInputClass('expectedBatch')}
-                  />
-                </div>
-
                 {/* === Attendance Time Duration === */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
@@ -388,31 +364,9 @@ export default function CreateSession() {
                   </Select>
                 </div>
 
-                {/* === Class Time (From-To) with Easy Presets === */}
-                <div className="space-y-3">
+                {/* === Class Time (From-To) - Simple inputs === */}
+                <div className="space-y-2">
                   <Label>Class Time *</Label>
-                  
-                  {/* Quick time slot presets - scrollable on mobile */}
-                  <div className="flex flex-wrap gap-2">
-                    {TIME_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.label}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => applyTimePreset(preset.from, preset.to)}
-                        className={`text-xs ${
-                          timeFrom === preset.from && timeTo === preset.to 
-                            ? 'border-primary bg-primary/10 text-primary' 
-                            : ''
-                        }`}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  {/* Manual time inputs */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label htmlFor="timeFrom" className="text-xs text-muted-foreground">From</Label>
@@ -441,18 +395,6 @@ export default function CreateSession() {
                       />
                     </div>
                   </div>
-                </div>
-
-                {/* === Additional Notes (Optional - no text shown) === */}
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Any additional notes..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="bg-secondary border-border min-h-[80px]"
-                  />
                 </div>
 
                 {/* === Centered, themed error message === */}
