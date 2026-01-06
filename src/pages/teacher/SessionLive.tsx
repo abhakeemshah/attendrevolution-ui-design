@@ -224,33 +224,33 @@ export default function SessionLive() {
           )}
 
           {/* === Main Layout: Side by Side === */}
-          <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* LEFT: Attendance Tracking (60% width on desktop) */}
-            <Card className="bg-card border-border shadow-md lg:col-span-3 order-2 lg:order-1">
-              <CardHeader className="py-3 px-4 border-b border-border">
-                <CardTitle className="flex items-center justify-between text-base">
+            {/* LEFT: Attendance Tracking */}
+            <Card className="bg-card border-border shadow-md order-2 md:order-1">
+              <CardHeader className="py-2 px-3 border-b border-border">
+                <CardTitle className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span>Live Attendance Tracking</span>
+                    <Users className="w-3 h-3 text-primary" />
+                    <span>Live Tracking</span>
                   </div>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {attendance.length} / {sessionData.expectedBatch}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {attendance.length}/{sessionData.expectedBatch}
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                {/* Roll number grid - small boxes */}
-                <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-10 xl:grid-cols-12 gap-1.5">
+              <CardContent className="p-2">
+                {/* Roll number grid - compact boxes to fit 200+ numbers */}
+                <div className="grid grid-cols-10 sm:grid-cols-14 md:grid-cols-10 lg:grid-cols-14 xl:grid-cols-20 gap-0.5">
                   {rollBoxes.map((rollNo) => (
                     <div
                       key={rollNo}
                       className={`
-                        aspect-square flex items-center justify-center rounded text-xs font-medium
-                        transition-all duration-300 min-w-[28px]
+                        w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-sm text-[10px] sm:text-xs font-semibold
+                        transition-all duration-200
                         ${markedRolls.has(rollNo) 
-                          ? "bg-primary text-primary-foreground shadow-sm" 
-                          : "bg-secondary text-muted-foreground border border-border"
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-secondary text-muted-foreground border border-border/50"
                         }
                       `}
                     >
@@ -261,61 +261,57 @@ export default function SessionLive() {
               </CardContent>
             </Card>
 
-            {/* RIGHT: QR Code + Timer (40% width on desktop) */}
-            <div className="space-y-4 lg:col-span-2 order-1 lg:order-2">
-              
-              {/* QR Code Card */}
-              <Card className="bg-card border-border shadow-md">
-                <CardHeader className="py-3 px-4 border-b border-border">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <QrCode className="w-4 h-4 text-primary" />
-                    QR Code
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 flex flex-col items-center">
-                  
-                  {/* QR Code display */}
-                  <div className="w-full max-w-[200px] aspect-square bg-foreground rounded-lg flex items-center justify-center p-2">
-                    <div className="w-full h-full bg-background rounded flex items-center justify-center">
-                      {/* Simulated QR pattern */}
-                      <div className="grid grid-cols-8 gap-0.5 p-2">
-                        {Array.from({ length: 64 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`aspect-square ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
-                          />
-                        ))}
-                      </div>
+            {/* RIGHT: QR Code + Timer */}
+            <Card className="bg-card border-border shadow-md order-1 md:order-2">
+              <CardHeader className="py-2 px-3 border-b border-border">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <QrCode className="w-3 h-3 text-primary" />
+                  QR Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 flex flex-col items-center">
+                
+                {/* QR Code display */}
+                <div className="w-32 h-32 sm:w-40 sm:h-40 bg-foreground rounded-lg flex items-center justify-center p-1.5">
+                  <div className="w-full h-full bg-background rounded flex items-center justify-center">
+                    {/* Simulated QR pattern */}
+                    <div className="grid grid-cols-8 gap-0.5 p-1">
+                      {Array.from({ length: 64 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`aspect-square ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
+                        />
+                      ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* Timer - directly under QR, no progress ring */}
-                  <div className="mt-4 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Time Remaining</span>
-                    </div>
-                    <span className={`text-3xl sm:text-4xl font-display font-bold ${
-                      timeRemaining < 60 ? "text-destructive" : "text-primary"
-                    }`}>
-                      {formatTime(timeRemaining)}
-                    </span>
+                {/* Timer - directly under QR */}
+                <div className="mt-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
+                    <Clock className="w-3 h-3" />
+                    <span>Time Remaining</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <span className={`text-2xl sm:text-3xl font-display font-bold ${
+                    timeRemaining < 60 ? "text-destructive" : "text-primary"
+                  }`}>
+                    {formatTime(timeRemaining)}
+                  </span>
+                </div>
 
-              {/* End Session Button */}
-              <Button
-                variant="destructive"
-                size="lg"
-                onClick={handleStopSession}
-                disabled={!isActive}
-                className="w-full gap-2"
-              >
-                <StopCircle className="w-5 h-5" />
-                End Session Early
-              </Button>
-            </div>
+                {/* End Session Button */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleStopSession}
+                  disabled={!isActive}
+                  className="w-full mt-3 gap-2"
+                >
+                  <StopCircle className="w-4 h-4" />
+                  End Session
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
