@@ -3,20 +3,12 @@
  * =================
  * Form for teachers to create a new attendance session
  * 
- * Fields:
- * - Semester (1st/2nd)
- * - Year (23-26)
- * - Shift (Morning/Evening)
- * - Class name & optional Group
- * - Date (auto-filled)
- * - Session Type (Theory/Practical)
- * - Course Name
- * - Expected Batch Size
- * - Attendance Time Duration (2-5 min)
- * - Class Time (From-To with presets)
- * - Additional Notes (optional)
- * 
- * On submit: Navigates to SessionLive with session data
+ * Features:
+ * - Teacher ID hidden (password) - not displayed anywhere
+ * - Time slots from 8:30 onwards in 1-hour increments
+ * - Required field validation with visual indicators
+ * - Group field optional (no "(Optional)" text)
+ * - Fully responsive for mobile devices
  */
 
 import { useState } from "react";
@@ -28,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -38,34 +30,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Year options: 23 to 26
+// Year options: 23 to 26 only
 const YEAR_OPTIONS = ["23", "24", "25", "26"];
 
-// Common class time presets for easier selection
+// Time slots from 8:30 onwards in 1-hour increments
 const TIME_PRESETS = [
-  { label: "8:00 - 9:30", from: "08:00", to: "09:30" },
-  { label: "9:30 - 11:00", from: "09:30", to: "11:00" },
-  { label: "11:00 - 12:30", from: "11:00", to: "12:30" },
-  { label: "1:00 - 2:30", from: "13:00", to: "14:30" },
-  { label: "2:30 - 4:00", from: "14:30", to: "16:00" },
+  { label: "8:30 - 9:30", from: "08:30", to: "09:30" },
+  { label: "9:30 - 10:30", from: "09:30", to: "10:30" },
+  { label: "10:30 - 11:30", from: "10:30", to: "11:30" },
+  { label: "11:30 - 12:30", from: "11:30", to: "12:30" },
+  { label: "12:30 - 1:30", from: "12:30", to: "13:30" },
+  { label: "1:30 - 2:30", from: "13:30", to: "14:30" },
+  { label: "2:30 - 3:30", from: "14:30", to: "15:30" },
+  { label: "3:30 - 4:30", from: "15:30", to: "16:30" },
 ];
 
 export default function CreateSession() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Teacher ID passed from RoleSelection
-  const teacherId = location.state?.teacherId || "Unknown";
+  // Teacher ID passed from RoleSelection (kept hidden)
+  const teacherId = location.state?.teacherId || "";
 
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
   
-  // Form state - all required fields initialized empty for validation
+  // Track which fields have validation errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  
+  // Form state
   const [semester, setSemester] = useState("");
   const [year, setYear] = useState("");
   const [shift, setShift] = useState<"morning" | "evening" | "">("");
   const [className, setClassName] = useState("");
-  const [group, setGroup] = useState(""); // Optional
+  const [group, setGroup] = useState(""); // Optional - no text shown
   const [sessionType, setSessionType] = useState<"theory" | "practical" | "">("");
   const [courseName, setCourseName] = useState("");
   const [expectedBatch, setExpectedBatch] = useState("");
@@ -74,42 +72,61 @@ export default function CreateSession() {
   const [timeTo, setTimeTo] = useState("");
   const [notes, setNotes] = useState(""); // Optional
 
-  // Auto-generate today's date in YYYY-MM-DD format
+  // Auto-generate today's date
   const today = new Date().toISOString().split('T')[0];
 
-  /**
-   * Apply a time preset to the from/to fields
-   */
+  // Apply a time preset
   const applyTimePreset = (from: string, to: string) => {
     setTimeFrom(from);
     setTimeTo(to);
+    // Clear time field errors when preset is selected
+    setFieldErrors(prev => ({ ...prev, timeFrom: false, timeTo: false }));
   };
 
   /**
-   * Validate form and create session
-   * All required fields must be filled
+   * Validate form and mark fields with errors
+   */
+  const validateForm = () => {
+    const errors: Record<string, boolean> = {};
+    
+    if (!semester) errors.semester = true;
+    if (!year) errors.year = true;
+    if (!shift) errors.shift = true;
+    if (!className.trim()) errors.className = true;
+    if (!sessionType) errors.sessionType = true;
+    if (!courseName.trim()) errors.courseName = true;
+    if (!expectedBatch || parseInt(expectedBatch) <= 0) errors.expectedBatch = true;
+    if (!timer) errors.timer = true;
+    if (!timeFrom) errors.timeFrom = true;
+    if (!timeTo) errors.timeTo = true;
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  /**
+   * Handle form submission
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
-    // Validation - check all required fields
-    if (!semester || !year || !shift || !className || !sessionType || 
-        !courseName || !expectedBatch || !timer || !timeFrom || !timeTo) {
+    // Validate all required fields
+    if (!validateForm()) {
       setError("Please fill in all required fields");
       return;
     }
 
-    // Validate batch size is a positive number
     const batchSize = parseInt(expectedBatch);
     if (isNaN(batchSize) || batchSize <= 0) {
+      setFieldErrors(prev => ({ ...prev, expectedBatch: true }));
       setError("Expected batch size must be a positive number");
       return;
     }
 
     setIsCreating(true);
     
-    // Prepare session data for API (POST /api/v1/sessions)
+    // Prepare session data (teacherId is stored but never shown)
     const sessionData = {
       teacherId,
       semester,
@@ -127,7 +144,6 @@ export default function CreateSession() {
       notes: notes || null,
     };
 
-    // Log for debugging - would be API call in production
     console.log("Creating session:", sessionData);
 
     // Simulate API delay
@@ -135,47 +151,53 @@ export default function CreateSession() {
       setIsCreating(false);
       const sessionId = `session-${Date.now()}`;
       
-      // Navigate to live session page with session data
       navigate(`/teacher/session/${sessionId}/live`, { 
-        state: { 
-          sessionData: { ...sessionData, id: sessionId }
-        }
+        state: { sessionData: { ...sessionData, id: sessionId } }
       });
     }, 800);
   };
 
+  // Helper to get input class with error state
+  const getInputClass = (fieldName: string) => {
+    return `bg-secondary border-border ${fieldErrors[fieldName] ? 'input-error' : ''}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="pt-8 pb-16 px-6">
+      <main className="pt-6 pb-12 px-4 sm:px-6">
         <div className="container mx-auto max-w-2xl">
+          
           {/* Back navigation */}
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="mb-6 gap-2"
+            className="mb-4 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Button>
 
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-2xl font-display">Create Attendance Session</CardTitle>
-              <CardDescription>
-                Teacher ID: <span className="text-primary font-medium">{teacherId}</span>
-              </CardDescription>
+          <Card className="bg-card border-border shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl sm:text-2xl font-display">
+                Create Attendance Session
+              </CardTitle>
+              {/* Note: Teacher ID is NOT displayed here - it's kept hidden */}
             </CardHeader>
             
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 
                 {/* === Semester and Year Row === */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label>Semester *</Label>
-                    <Select value={semester} onValueChange={setSemester}>
-                      <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue placeholder="Select Semester" />
+                    <Select value={semester} onValueChange={(v) => {
+                      setSemester(v);
+                      setFieldErrors(prev => ({ ...prev, semester: false }));
+                    }}>
+                      <SelectTrigger className={getInputClass('semester')}>
+                        <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="1">1st Semester</SelectItem>
@@ -186,9 +208,12 @@ export default function CreateSession() {
                   
                   <div className="space-y-2">
                     <Label>Year *</Label>
-                    <Select value={year} onValueChange={setYear}>
-                      <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue placeholder="Select Year" />
+                    <Select value={year} onValueChange={(v) => {
+                      setYear(v);
+                      setFieldErrors(prev => ({ ...prev, year: false }));
+                    }}>
+                      <SelectTrigger className={getInputClass('year')}>
+                        <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
                         {YEAR_OPTIONS.map((y) => (
@@ -199,15 +224,18 @@ export default function CreateSession() {
                   </div>
                 </div>
 
-                {/* === Shift Selection (Morning/Evening) === */}
+                {/* === Shift Selection === */}
                 <div className="space-y-2">
                   <Label>Shift *</Label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <Button
                       type="button"
                       variant={shift === "morning" ? "default" : "outline"}
-                      onClick={() => setShift("morning")}
-                      className="flex-1 gap-2"
+                      onClick={() => {
+                        setShift("morning");
+                        setFieldErrors(prev => ({ ...prev, shift: false }));
+                      }}
+                      className={`flex-1 gap-2 ${fieldErrors.shift && !shift ? 'input-error' : ''}`}
                     >
                       <Sun className="w-4 h-4" />
                       Morning
@@ -215,8 +243,11 @@ export default function CreateSession() {
                     <Button
                       type="button"
                       variant={shift === "evening" ? "default" : "outline"}
-                      onClick={() => setShift("evening")}
-                      className="flex-1 gap-2"
+                      onClick={() => {
+                        setShift("evening");
+                        setFieldErrors(prev => ({ ...prev, shift: false }));
+                      }}
+                      className={`flex-1 gap-2 ${fieldErrors.shift && !shift ? 'input-error' : ''}`}
                     >
                       <Moon className="w-4 h-4" />
                       Evening
@@ -224,8 +255,8 @@ export default function CreateSession() {
                   </div>
                 </div>
 
-                {/* === Class and Group === */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                {/* === Class and Group - Aligned evenly === */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="className" className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-primary" />
@@ -235,12 +266,16 @@ export default function CreateSession() {
                       id="className"
                       placeholder="e.g., SWE Part III"
                       value={className}
-                      onChange={(e) => setClassName(e.target.value)}
-                      className="bg-secondary border-border"
+                      onChange={(e) => {
+                        setClassName(e.target.value);
+                        setFieldErrors(prev => ({ ...prev, className: false }));
+                      }}
+                      className={getInputClass('className')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="group">Group (Optional)</Label>
+                    {/* No "(Optional)" text - just the label */}
+                    <Label htmlFor="group">Group</Label>
                     <Input
                       id="group"
                       placeholder="e.g., A or B"
@@ -251,7 +286,7 @@ export default function CreateSession() {
                   </div>
                 </div>
 
-                {/* === Date (Auto-filled, read-only) === */}
+                {/* === Date (Auto-filled) === */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-primary" />
@@ -261,19 +296,22 @@ export default function CreateSession() {
                     type="date"
                     value={today}
                     disabled
-                    className="bg-secondary/50 border-border text-muted-foreground"
+                    className="bg-muted border-border text-muted-foreground"
                   />
                 </div>
 
-                {/* === Session Type (Theory/Practical) === */}
+                {/* === Session Type === */}
                 <div className="space-y-2">
                   <Label>Session Type *</Label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <Button
                       type="button"
                       variant={sessionType === "theory" ? "default" : "outline"}
-                      onClick={() => setSessionType("theory")}
-                      className="flex-1 gap-2"
+                      onClick={() => {
+                        setSessionType("theory");
+                        setFieldErrors(prev => ({ ...prev, sessionType: false }));
+                      }}
+                      className={`flex-1 gap-2 ${fieldErrors.sessionType && !sessionType ? 'input-error' : ''}`}
                     >
                       <BookText className="w-4 h-4" />
                       Theory
@@ -281,8 +319,11 @@ export default function CreateSession() {
                     <Button
                       type="button"
                       variant={sessionType === "practical" ? "default" : "outline"}
-                      onClick={() => setSessionType("practical")}
-                      className="flex-1 gap-2"
+                      onClick={() => {
+                        setSessionType("practical");
+                        setFieldErrors(prev => ({ ...prev, sessionType: false }));
+                      }}
+                      className={`flex-1 gap-2 ${fieldErrors.sessionType && !sessionType ? 'input-error' : ''}`}
                     >
                       <FlaskConical className="w-4 h-4" />
                       Practical
@@ -297,8 +338,11 @@ export default function CreateSession() {
                     id="courseName"
                     placeholder="e.g., Data Structures"
                     value={courseName}
-                    onChange={(e) => setCourseName(e.target.value)}
-                    className="bg-secondary border-border"
+                    onChange={(e) => {
+                      setCourseName(e.target.value);
+                      setFieldErrors(prev => ({ ...prev, courseName: false }));
+                    }}
+                    className={getInputClass('courseName')}
                   />
                 </div>
 
@@ -314,8 +358,11 @@ export default function CreateSession() {
                     placeholder="e.g., 45"
                     min="1"
                     value={expectedBatch}
-                    onChange={(e) => setExpectedBatch(e.target.value)}
-                    className="bg-secondary border-border"
+                    onChange={(e) => {
+                      setExpectedBatch(e.target.value);
+                      setFieldErrors(prev => ({ ...prev, expectedBatch: false }));
+                    }}
+                    className={getInputClass('expectedBatch')}
                   />
                 </div>
 
@@ -325,9 +372,12 @@ export default function CreateSession() {
                     <Clock className="w-4 h-4 text-primary" />
                     Attendance Time Duration *
                   </Label>
-                  <Select value={timer} onValueChange={setTimer}>
-                    <SelectTrigger className="bg-secondary border-border">
-                      <SelectValue placeholder="Select Duration (2-5 minutes)" />
+                  <Select value={timer} onValueChange={(v) => {
+                    setTimer(v);
+                    setFieldErrors(prev => ({ ...prev, timer: false }));
+                  }}>
+                    <SelectTrigger className={getInputClass('timer')}>
+                      <SelectValue placeholder="Select (2-5 minutes)" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="2">2 Minutes</SelectItem>
@@ -338,11 +388,11 @@ export default function CreateSession() {
                   </Select>
                 </div>
 
-                {/* === Class Time (From-To) with Presets === */}
+                {/* === Class Time (From-To) with Easy Presets === */}
                 <div className="space-y-3">
                   <Label>Class Time *</Label>
                   
-                  {/* Quick presets for common times */}
+                  {/* Quick time slot presets - scrollable on mobile */}
                   <div className="flex flex-wrap gap-2">
                     {TIME_PRESETS.map((preset) => (
                       <Button
@@ -351,7 +401,11 @@ export default function CreateSession() {
                         variant="outline"
                         size="sm"
                         onClick={() => applyTimePreset(preset.from, preset.to)}
-                        className={`text-xs ${timeFrom === preset.from && timeTo === preset.to ? 'border-primary bg-primary/10' : ''}`}
+                        className={`text-xs ${
+                          timeFrom === preset.from && timeTo === preset.to 
+                            ? 'border-primary bg-primary/10 text-primary' 
+                            : ''
+                        }`}
                       >
                         {preset.label}
                       </Button>
@@ -359,15 +413,18 @@ export default function CreateSession() {
                   </div>
                   
                   {/* Manual time inputs */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label htmlFor="timeFrom" className="text-xs text-muted-foreground">From</Label>
                       <Input
                         id="timeFrom"
                         type="time"
                         value={timeFrom}
-                        onChange={(e) => setTimeFrom(e.target.value)}
-                        className="bg-secondary border-border"
+                        onChange={(e) => {
+                          setTimeFrom(e.target.value);
+                          setFieldErrors(prev => ({ ...prev, timeFrom: false }));
+                        }}
+                        className={getInputClass('timeFrom')}
                       />
                     </div>
                     <div className="space-y-1">
@@ -376,16 +433,19 @@ export default function CreateSession() {
                         id="timeTo"
                         type="time"
                         value={timeTo}
-                        onChange={(e) => setTimeTo(e.target.value)}
-                        className="bg-secondary border-border"
+                        onChange={(e) => {
+                          setTimeTo(e.target.value);
+                          setFieldErrors(prev => ({ ...prev, timeTo: false }));
+                        }}
+                        className={getInputClass('timeTo')}
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* === Additional Notes (Optional) === */}
+                {/* === Additional Notes (Optional - no text shown) === */}
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                  <Label htmlFor="notes">Additional Notes</Label>
                   <Textarea
                     id="notes"
                     placeholder="Any additional notes..."
@@ -395,11 +455,12 @@ export default function CreateSession() {
                   />
                 </div>
 
-                {/* === Error Display - Centered, themed === */}
+                {/* === Centered, themed error message === */}
                 {error && (
-                  <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-secondary border border-border">
+                  <div className="flex items-center justify-center gap-2 p-4 rounded-lg 
+                                  bg-primary/5 border border-primary/20">
                     <AlertCircle className="w-5 h-5 text-primary" />
-                    <span className="text-muted-foreground">{error}</span>
+                    <span className="text-foreground">{error}</span>
                   </div>
                 )}
 
@@ -412,7 +473,8 @@ export default function CreateSession() {
                 >
                   {isCreating ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground 
+                                      rounded-full animate-spin" />
                       Creating Session...
                     </>
                   ) : (

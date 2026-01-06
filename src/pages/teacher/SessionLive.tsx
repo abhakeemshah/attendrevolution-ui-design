@@ -3,21 +3,20 @@
  * ================
  * Live attendance session page for teachers
  * 
- * Layout:
- * - LEFT: Roll number grid (smaller boxes to fit screen)
- * - RIGHT: QR code with circular progress ring around it, timer below
+ * Layout (as per reference image):
+ * - Side by side: LEFT = Attendance tracking, RIGHT = QR Code
+ * - Timer directly under QR (no circular progress ring)
+ * - Mobile: stacked layout (QR on top)
  * 
  * Features:
- * - Real-time attendance marking (boxes turn green when marked)
- * - Countdown timer with progress visualization
+ * - Real-time attendance marking (boxes turn blue when marked)
+ * - Countdown timer display
  * - End session early option
- * - Success message with download option when complete
- * 
- * Note: Teacher cannot refresh or save QR manually - it's displayed automatically
+ * - Success overlay with download option
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { QrCode, StopCircle, Clock, Users, CheckCircle2, Download, Home, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Session data structure passed from CreateSession
+// Session data interface
 interface SessionData {
   id: string;
   teacherId: string;
@@ -51,7 +50,7 @@ interface SessionData {
   notes: string | null;
 }
 
-// Attendance record for each student
+// Attendance record interface
 interface AttendanceRecord {
   rollNo: number;
   markedAt: Date;
@@ -60,14 +59,12 @@ interface AttendanceRecord {
 export default function SessionLive() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
   
-  // Session data from navigation state
+  // Session data from navigation
   const sessionData: SessionData = location.state?.sessionData;
   
   // Timer state
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [totalTime, setTotalTime] = useState(0);
   const [isActive, setIsActive] = useState(true);
   
   // Attendance tracking
@@ -76,20 +73,15 @@ export default function SessionLive() {
   // UI state
   const [showStopDialog, setShowStopDialog] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
-  const [qrValue, setQrValue] = useState("");
 
-  // Initialize timer and QR on mount
+  // Initialize timer on mount
   useEffect(() => {
     if (sessionData) {
-      const totalSeconds = sessionData.timerMinutes * 60;
-      setTimeRemaining(totalSeconds);
-      setTotalTime(totalSeconds);
-      // Generate unique QR value (in production, this comes from backend)
-      setQrValue(`ATTEND-${sessionData.id}-${Date.now()}`);
+      setTimeRemaining(sessionData.timerMinutes * 60);
     }
   }, [sessionData]);
 
-  // Countdown timer logic
+  // Countdown timer
   useEffect(() => {
     if (!isActive || timeRemaining <= 0) return;
 
@@ -107,15 +99,13 @@ export default function SessionLive() {
     return () => clearInterval(interval);
   }, [isActive, timeRemaining]);
 
-  // Simulate students scanning QR (demo only - remove in production)
+  // Simulate students scanning (demo only)
   useEffect(() => {
     if (!isActive || !sessionData) return;
 
     const simulateScans = setInterval(() => {
-      // Random roll number within batch size
       const randomRoll = Math.floor(Math.random() * sessionData.expectedBatch) + 1;
       
-      // Only add if not already marked
       setAttendance(prev => {
         if (prev.find(a => a.rollNo === randomRoll)) return prev;
         return [...prev, { rollNo: randomRoll, markedAt: new Date() }];
@@ -125,45 +115,33 @@ export default function SessionLive() {
     return () => clearInterval(simulateScans);
   }, [isActive, sessionData]);
 
-  /**
-   * End the session and save attendance
-   * In production: POST to /api/v1/attendance with session data
-   */
+  // End session and save attendance
   const endSession = useCallback(() => {
     setIsActive(false);
     setSessionEnded(true);
     
-    // Log attendance data (would be API call in production)
-    console.log("Session ended. Saving to MongoDB:", {
+    console.log("Session ended. Saving:", {
       sessionId: sessionData?.id,
-      teacherId: sessionData?.teacherId,
       attendance: attendance.map(a => ({ rollNo: a.rollNo, time: a.markedAt })),
       totalPresent: attendance.length,
-      totalExpected: sessionData?.expectedBatch,
     });
   }, [attendance, sessionData]);
 
-  // Handle early session end request
   const handleStopSession = () => setShowStopDialog(true);
 
-  // Confirm and execute early end
   const confirmStopSession = () => {
     setShowStopDialog(false);
     endSession();
   };
 
-  /**
-   * Format seconds to MM:SS display
-   */
+  // Format seconds to MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  /**
-   * Download attendance report as CSV
-   */
+  // Download CSV report
   const downloadReport = () => {
     const csvContent = [
       "Roll No,Marked At",
@@ -180,14 +158,14 @@ export default function SessionLive() {
     link.click();
   };
 
-  // Error state: No session data
+  // Error: No session data
   if (!sessionData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="bg-card border-border max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">Session data not found. Please create a new session.</p>
+            <p className="text-muted-foreground mb-4">Session not found. Please create a new session.</p>
             <Button onClick={() => navigate("/")} className="gap-2">
               <Home className="w-4 h-4" />
               Go Home
@@ -198,36 +176,29 @@ export default function SessionLive() {
     );
   }
 
-  // Create roll number boxes array
+  // Create roll number boxes
   const rollBoxes = Array.from({ length: sessionData.expectedBatch }, (_, i) => i + 1);
   const markedRolls = new Set(attendance.map(a => a.rollNo));
-  
-  // Calculate progress percentage for circular ring
-  const progressPercent = totalTime > 0 ? (timeRemaining / totalTime) * 100 : 0;
-  const circumference = 2 * Math.PI * 120; // Circle radius = 120
-  const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="p-4 md:p-6">
-        <div className="container mx-auto">
+      <main className="p-4 sm:p-6">
+        <div className="container mx-auto max-w-6xl">
           
-          {/* Session Header Info */}
-          <div className="mb-4 text-center">
-            <h1 className="text-xl md:text-2xl font-display font-bold mb-1">
-              {sessionData.courseName}
-            </h1>
-            <p className="text-muted-foreground text-sm">
+          {/* Session Header */}
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/5 border border-primary/20 rounded-lg text-center">
+            <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">
               {sessionData.className} {sessionData.group && `(${sessionData.group})`} • {sessionData.sessionType} • {sessionData.date}
-            </p>
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">{sessionData.courseName}</p>
           </div>
 
-          {/* === Success State: Session Completed === */}
+          {/* === Success Overlay === */}
           {sessionEnded && (
-            <div className="fixed inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-              <Card className="bg-card border-primary/30 max-w-md w-full animate-fade-in">
+            <div className="fixed inset-0 bg-background/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="bg-card border-primary/20 max-w-md w-full animate-fade-in shadow-xl">
                 <CardContent className="pt-8 pb-8 text-center">
-                  <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-10 h-10 text-primary" />
                   </div>
                   <h2 className="text-2xl font-display font-bold text-foreground mb-2">
@@ -237,7 +208,6 @@ export default function SessionLive() {
                     {attendance.length} of {sessionData.expectedBatch} students marked present
                   </p>
                   
-                  {/* Action buttons */}
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button onClick={downloadReport} variant="outline" className="flex-1 gap-2">
                       <Download className="w-4 h-4" />
@@ -253,31 +223,33 @@ export default function SessionLive() {
             </div>
           )}
 
-          {/* === Main Content: Left (Boxes) + Right (QR) === */}
-          <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+          {/* === Main Layout: Side by Side === */}
+          <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
             
-            {/* LEFT SIDE: Attendance Roll Number Grid */}
-            <Card className="bg-card border-border order-2 lg:order-1">
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="w-4 h-4 text-primary" />
-                  Attendance
-                  <span className="ml-auto text-sm font-normal text-muted-foreground">
+            {/* LEFT: Attendance Tracking (60% width on desktop) */}
+            <Card className="bg-card border-border shadow-md lg:col-span-3 order-2 lg:order-1">
+              <CardHeader className="py-3 px-4 border-b border-border">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span>Live Attendance Tracking</span>
+                  </div>
+                  <span className="text-sm font-normal text-muted-foreground">
                     {attendance.length} / {sessionData.expectedBatch}
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="px-4 pb-4">
-                {/* Grid of small roll number boxes */}
-                <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-15 gap-1">
+              <CardContent className="p-4">
+                {/* Roll number grid - small boxes */}
+                <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-10 xl:grid-cols-12 gap-1.5">
                   {rollBoxes.map((rollNo) => (
                     <div
                       key={rollNo}
                       className={`
-                        w-7 h-7 flex items-center justify-center rounded text-xs font-medium
-                        transition-all duration-300
+                        aspect-square flex items-center justify-center rounded text-xs font-medium
+                        transition-all duration-300 min-w-[28px]
                         ${markedRolls.has(rollNo) 
-                          ? "bg-primary text-primary-foreground" 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
                           : "bg-secondary text-muted-foreground border border-border"
                         }
                       `}
@@ -289,67 +261,43 @@ export default function SessionLive() {
               </CardContent>
             </Card>
 
-            {/* RIGHT SIDE: QR Code with Progress Ring + Timer */}
-            <div className="space-y-4 order-1 lg:order-2">
+            {/* RIGHT: QR Code + Timer (40% width on desktop) */}
+            <div className="space-y-4 lg:col-span-2 order-1 lg:order-2">
               
-              {/* QR Code with circular progress ring */}
-              <Card className="bg-card border-border">
-                <CardHeader className="py-3 px-4">
+              {/* QR Code Card */}
+              <Card className="bg-card border-border shadow-md">
+                <CardHeader className="py-3 px-4 border-b border-border">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <QrCode className="w-4 h-4 text-primary" />
-                    Scan to Mark Attendance
+                    QR Code
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center pb-6">
+                <CardContent className="p-4 flex flex-col items-center">
                   
-                  {/* QR with circular progress ring around it */}
-                  <div className="relative w-64 h-64 flex items-center justify-center">
-                    {/* Circular progress ring (SVG) */}
-                    <svg className="absolute w-full h-full -rotate-90">
-                      {/* Background circle */}
-                      <circle
-                        cx="128"
-                        cy="128"
-                        r="120"
-                        fill="none"
-                        stroke="hsl(var(--secondary))"
-                        strokeWidth="8"
-                      />
-                      {/* Progress circle */}
-                      <circle
-                        cx="128"
-                        cy="128"
-                        r="120"
-                        fill="none"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        className="transition-all duration-1000"
-                      />
-                    </svg>
-                    
-                    {/* QR Code placeholder inside the ring */}
-                    <div className="w-44 h-44 bg-foreground rounded-lg flex items-center justify-center">
-                      <div className="w-40 h-40 bg-background rounded flex items-center justify-center">
-                        {/* Simulated QR pattern */}
-                        <div className="grid grid-cols-8 gap-0.5">
-                          {Array.from({ length: 64 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`w-4 h-4 ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
-                            />
-                          ))}
-                        </div>
+                  {/* QR Code display */}
+                  <div className="w-full max-w-[200px] aspect-square bg-foreground rounded-lg flex items-center justify-center p-2">
+                    <div className="w-full h-full bg-background rounded flex items-center justify-center">
+                      {/* Simulated QR pattern */}
+                      <div className="grid grid-cols-8 gap-0.5 p-2">
+                        {Array.from({ length: 64 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`aspect-square ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
 
-                  {/* Timer display - directly under QR */}
+                  {/* Timer - directly under QR, no progress ring */}
                   <div className="mt-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Time Remaining</p>
-                    <span className={`text-4xl font-display font-bold ${timeRemaining < 60 ? "text-destructive" : "text-primary"}`}>
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm mb-1">
+                      <Clock className="w-4 h-4" />
+                      <span>Time Remaining</span>
+                    </div>
+                    <span className={`text-3xl sm:text-4xl font-display font-bold ${
+                      timeRemaining < 60 ? "text-destructive" : "text-primary"
+                    }`}>
                       {formatTime(timeRemaining)}
                     </span>
                   </div>
@@ -374,16 +322,16 @@ export default function SessionLive() {
 
       {/* Stop Confirmation Dialog */}
       <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <AlertDialogContent className="bg-card border-border">
+        <AlertDialogContent className="bg-card border-border max-w-sm mx-4">
           <AlertDialogHeader>
             <AlertDialogTitle>End Session Early?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will stop the attendance session and save all recorded attendance. 
-              Students will no longer be able to mark their attendance.
+              This will stop the session and save all recorded attendance. 
+              Students can no longer mark their attendance.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Continue Session</AlertDialogCancel>
+            <AlertDialogCancel>Continue</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmStopSession} 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
