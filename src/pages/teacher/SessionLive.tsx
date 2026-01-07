@@ -223,10 +223,10 @@ export default function SessionLive() {
             </div>
           )}
 
-          {/* === Main Layout: Side by Side === */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* === Main Layout: 80% Tracking / 20% QR === */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
             
-            {/* LEFT: Attendance Tracking */}
+            {/* LEFT: Attendance Tracking (80%) */}
             <Card className="bg-card border-border shadow-md order-2 md:order-1">
               <CardHeader className="py-2 px-3 border-b border-border">
                 <CardTitle className="flex items-center justify-between text-sm">
@@ -239,14 +239,14 @@ export default function SessionLive() {
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-2">
-                {/* Roll number grid - compact boxes to fit 200+ numbers */}
-                <div className="grid grid-cols-10 sm:grid-cols-14 md:grid-cols-10 lg:grid-cols-14 xl:grid-cols-20 gap-0.5">
+              <CardContent className="p-3">
+                {/* Roll number grid - wider boxes with bigger numbers */}
+                <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 xl:grid-cols-20 gap-1">
                   {rollBoxes.map((rollNo) => (
                     <div
                       key={rollNo}
                       className={`
-                        w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-sm text-[10px] sm:text-xs font-semibold
+                        w-7 h-6 sm:w-8 sm:h-7 flex items-center justify-center rounded text-xs sm:text-sm font-bold
                         transition-all duration-200
                         ${markedRolls.has(rollNo) 
                           ? "bg-primary text-primary-foreground" 
@@ -261,8 +261,8 @@ export default function SessionLive() {
               </CardContent>
             </Card>
 
-            {/* RIGHT: QR Code + Timer */}
-            <Card className="bg-card border-border shadow-md order-1 md:order-2">
+            {/* RIGHT: QR Code + Timer (20% - fixed width) */}
+            <Card className="bg-card border-border shadow-md order-1 md:order-2 h-fit">
               <CardHeader className="py-2 px-3 border-b border-border">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <QrCode className="w-3 h-3 text-primary" />
@@ -271,12 +271,12 @@ export default function SessionLive() {
               </CardHeader>
               <CardContent className="p-3 flex flex-col items-center">
                 
-                {/* QR Code display */}
-                <div className="w-32 h-32 sm:w-40 sm:h-40 bg-foreground rounded-lg flex items-center justify-center p-1.5">
+                {/* QR Code display - fills the box completely */}
+                <div className="w-full aspect-square bg-foreground rounded-lg flex items-center justify-center p-2">
                   <div className="w-full h-full bg-background rounded flex items-center justify-center">
-                    {/* Simulated QR pattern */}
-                    <div className="grid grid-cols-8 gap-0.5 p-1">
-                      {Array.from({ length: 64 }).map((_, i) => (
+                    {/* Simulated QR pattern - fills container */}
+                    <div className="grid grid-cols-10 gap-0.5 w-full h-full p-2">
+                      {Array.from({ length: 100 }).map((_, i) => (
                         <div
                           key={i}
                           className={`aspect-square ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
@@ -292,7 +292,7 @@ export default function SessionLive() {
                     <Clock className="w-3 h-3" />
                     <span>Time Remaining</span>
                   </div>
-                  <span className={`text-2xl sm:text-3xl font-display font-bold ${
+                  <span className={`text-2xl font-display font-bold ${
                     timeRemaining < 60 ? "text-destructive" : "text-primary"
                   }`}>
                     {formatTime(timeRemaining)}
