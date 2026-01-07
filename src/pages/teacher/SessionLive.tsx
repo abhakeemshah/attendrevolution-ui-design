@@ -181,107 +181,140 @@ export default function SessionLive() {
   const markedRolls = new Set(attendance.map(a => a.rollNo));
 
   return (
-    <div className="min-h-screen bg-background p-3 sm:p-4">
-      <div className="container mx-auto max-w-5xl space-y-3">
-        
-        {/* Session Info Header - Pill style like reference */}
-        <div className="flex items-center justify-center">
-          <div className="inline-flex items-center gap-2 text-sm sm:text-base font-bold text-primary bg-background border-2 border-primary rounded-full py-2 px-6">
-            <span>{sessionData.courseName}</span>
-            <span>·</span>
-            <span>{sessionData.sessionType}</span>
-            <span>·</span>
-            <span>{sessionData.date}</span>
+    <div className="min-h-screen bg-background">
+      <main className="p-4 sm:p-6">
+        <div className="container mx-auto max-w-6xl">
+          
+          {/* Session Header */}
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/5 border border-primary/20 rounded-lg text-center">
+            <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">
+              {sessionData.className} {sessionData.group && `(${sessionData.group})`} • {sessionData.sessionType} • {sessionData.date}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">{sessionData.courseName}</p>
           </div>
-        </div>
 
-        {/* === Success Overlay === */}
-        {sessionEnded && (
-          <div className="fixed inset-0 bg-background/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <Card className="bg-card border-primary/20 max-w-md w-full animate-fade-in shadow-xl">
-              <CardContent className="pt-8 pb-8 text-center">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-10 h-10 text-primary" />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-foreground mb-2">
-                  Attendance Saved!
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {attendance.length} of {sessionData.expectedBatch} students marked present
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button onClick={downloadReport} variant="outline" className="flex-1 gap-2">
-                    <Download className="w-4 h-4" />
-                    Download Report
-                  </Button>
-                  <Button onClick={() => navigate("/")} className="flex-1 gap-2">
-                    <Home className="w-4 h-4" />
-                    Leave
-                  </Button>
+          {/* === Success Overlay === */}
+          {sessionEnded && (
+            <div className="fixed inset-0 bg-background/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="bg-card border-primary/20 max-w-md w-full animate-fade-in shadow-xl">
+                <CardContent className="pt-8 pb-8 text-center">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 className="w-10 h-10 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+                    Attendance Saved!
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    {attendance.length} of {sessionData.expectedBatch} students marked present
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={downloadReport} variant="outline" className="flex-1 gap-2">
+                      <Download className="w-4 h-4" />
+                      Download Report
+                    </Button>
+                    <Button onClick={() => navigate("/")} className="flex-1 gap-2">
+                      <Home className="w-4 h-4" />
+                      Leave
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* === Main Layout: 80% Tracking / 20% QR === */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
+            
+            {/* LEFT: Attendance Tracking (80%) */}
+            <Card className="bg-card border-border shadow-md order-2 md:order-1">
+              <CardHeader className="py-2 px-3 border-b border-border">
+                <CardTitle className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-3 h-3 text-primary" />
+                    <span>Live Tracking</span>
+                  </div>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {attendance.length}/{sessionData.expectedBatch}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3">
+                {/* Roll number grid - wider boxes with bigger numbers */}
+                <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 xl:grid-cols-20 gap-1">
+                  {rollBoxes.map((rollNo) => (
+                    <div
+                      key={rollNo}
+                      className={`
+                        w-7 h-6 sm:w-8 sm:h-7 flex items-center justify-center rounded text-xs sm:text-sm font-bold
+                        transition-all duration-200
+                        ${markedRolls.has(rollNo) 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-secondary text-muted-foreground border border-border/50"
+                        }
+                      `}
+                    >
+                      {rollNo}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
 
-        {/* === Main Layout: Side by Side like reference === */}
-        <div className="flex flex-col md:flex-row gap-3 border-2 border-primary rounded-2xl p-3 sm:p-4">
-          
-          {/* LEFT: Attendance Tracking - Takes most space */}
-          <div className="flex-1 border-2 border-primary rounded-xl p-3 order-2 md:order-1">
-            <h3 className="text-primary font-bold text-xs sm:text-sm mb-2 tracking-wide uppercase">Live Tracking</h3>
-            
-            {/* Roll number grid - square boxes with numbers */}
-            <div className="grid grid-cols-10 sm:grid-cols-12 gap-1 sm:gap-1.5">
-              {rollBoxes.map((rollNo) => (
-                <div
-                  key={rollNo}
-                  className={`
-                    aspect-square flex items-center justify-center rounded text-sm sm:text-lg font-black
-                    transition-all duration-200 border-2
-                    ${markedRolls.has(rollNo) 
-                      ? "bg-primary text-primary-foreground border-primary" 
-                      : "bg-background text-primary border-primary"
-                    }
-                  `}
-                >
-                  {rollNo}
+            {/* RIGHT: QR Code + Timer (20% - fixed width) */}
+            <Card className="bg-card border-border shadow-md order-1 md:order-2 h-fit">
+              <CardHeader className="py-2 px-3 border-b border-border">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <QrCode className="w-3 h-3 text-primary" />
+                  QR Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 flex flex-col items-center">
+                
+                {/* QR Code display - fills the box completely */}
+                <div className="w-full aspect-square bg-foreground rounded-lg flex items-center justify-center p-2">
+                  <div className="w-full h-full bg-background rounded flex items-center justify-center">
+                    {/* Simulated QR pattern - fills container */}
+                    <div className="grid grid-cols-10 gap-0.5 w-full h-full p-2">
+                      {Array.from({ length: 100 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`aspect-square ${Math.random() > 0.5 ? "bg-foreground" : "bg-background"}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* RIGHT: QR Code + Timer - Fixed width like reference */}
-          <div className="w-full md:w-56 lg:w-64 flex flex-col items-center order-1 md:order-2 space-y-3">
-            
-            {/* QR Code Box */}
-            <div className="w-full border-2 border-primary rounded-xl p-3 flex-1 flex items-center justify-center bg-background">
-              <span className="text-primary font-black text-xl sm:text-2xl tracking-wider">QR CODE</span>
-            </div>
+                {/* Timer - directly under QR */}
+                <div className="mt-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
+                    <Clock className="w-3 h-3" />
+                    <span>Time Remaining</span>
+                  </div>
+                  <span className={`text-2xl font-display font-bold ${
+                    timeRemaining < 60 ? "text-destructive" : "text-primary"
+                  }`}>
+                    {formatTime(timeRemaining)}
+                  </span>
+                </div>
 
-            {/* Timer */}
-            <div className="text-center">
-              <span className="text-primary font-black text-base sm:text-lg tracking-wider uppercase">Timer</span>
-              <div className={`text-2xl sm:text-3xl font-display font-bold ${
-                timeRemaining < 60 ? "text-destructive" : "text-primary"
-              }`}>
-                {formatTime(timeRemaining)}
-              </div>
-            </div>
-
-            {/* End Session Button */}
-            <Button 
-              variant="outline"
-              className="w-full border-2 border-primary text-primary font-black text-sm py-2.5 rounded-lg hover:bg-primary hover:text-primary-foreground uppercase tracking-wide"
-              onClick={handleStopSession}
-              disabled={!isActive}
-            >
-              End Session Early
-            </Button>
+                {/* End Session Button */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleStopSession}
+                  disabled={!isActive}
+                  className="w-full mt-3 gap-2"
+                >
+                  <StopCircle className="w-4 h-4" />
+                  End Session
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Stop Confirmation Dialog */}
       <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
