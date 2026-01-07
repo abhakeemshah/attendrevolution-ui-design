@@ -4,9 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RoleSelection from "./pages/RoleSelection";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import CreateSession from "./pages/teacher/CreateSession";
-import SessionLive from "./pages/teacher/SessionLive";
-import StudentScan from "./pages/student/StudentScan";
+import SessionDetail from "./pages/teacher/SessionDetail";
+import StudentPanel from "./pages/student/StudentPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,9 +20,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<RoleSelection />} />
+          <Route path="/teacher" element={<TeacherDashboard />} />
           <Route path="/teacher/create" element={<CreateSession />} />
-          <Route path="/teacher/session/:id/live" element={<SessionLive />} />
-          <Route path="/student/scan" element={<StudentScan />} />
+          <Route path="/teacher/session/:id" element={<SessionDetail />} />
+          <Route path="/student" element={<StudentPanel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
